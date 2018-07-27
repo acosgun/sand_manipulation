@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="sandman" name="sand_contours" type="sand_contours.py" output="screen">
+    <param name="/ref_img_name" value="$(find sandman)/ref.png"/>
+  </node>
+</launch>

@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="sandman" name="push_executer" type="push_executer.py" output="screen">
+    <!--<param name="/robot_type" value="ur5"/>-->
+    <param name="/robot_type" value="kinova"/>
+  </node>
+</launch>

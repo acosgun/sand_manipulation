@@ -1,0 +1,14 @@
+<launch>
+  <node pkg="sandman" name="run_net" type="run_net.py" output="screen">
+    <param name="/use_robs_model" value="True"/>
+    <param name="/ann_model_filename" value="$(find sandman)/models/ann_weights.pt"/>
+    <param name="/ann_model_filename_akan" value="$(find sandman)/models/ann_model_oldnew.hdf5"/>
+    <param name="/ann_scale_filename" value="$(find sandman)/models/regression_scale_oldnew.pkl"/>
+    <param name="/regression_model_filename" value="$(find sandman)/models/regression_model.pkl"/>
+    <param name="/regression_scale_filename" value="$(find sandman)/models/regression_scale.pkl"/>
+    <param name="/crop_x_min" value="300"/>
+    <param name="/crop_x_max" value="640"/>
+    <param name="/crop_y_min" value="60"/>
+    <param name="/crop_y_max" value="420"/>
+  </node>
+</launch>
