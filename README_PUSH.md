@@ -50,10 +50,10 @@ go to ~/andrea_sand_data/ros_ws/ and run catkin_make then source devel/setup.zsh
 (First set 'train_polyreg' variable True or False in src/train_akan_polyreg_ann.py)
 
 python train_akan_polyreg_ann.py
-other ANN are in sandman.py:
+other ANN are in sandman/src:
 python train_net_v1.py
 python train_net_v2.py
-python train_net_conv1.py
+python train_conv_net_v1.py
 
 
 9) Run ANN

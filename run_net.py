@@ -126,7 +126,6 @@ def contour_callback(msg):
     
 if __name__ == '__main__':
     rospy.init_node('run_net', anonymous=True)
-    #ann_model_filename = rospy.get_param('~ann_model_filename', './models/ann_weights.pt')
     ann_model_filename = rospy.get_param('~ann_model_filename', './models/ann_model.hdf5')
     ann_scale_filename = rospy.get_param('~ann_scale_filename', './models/ann_scale.pkl')
     regression_model_filename = rospy.get_param('~regression_model_filename', './models/regression_model.pkl')
@@ -147,8 +146,8 @@ if __name__ == '__main__':
             import torch.nn.functional as F
             from torch.autograd import Variable
             print("ciao")
-            ann_model = torch.load('ann_weights.pt') 
-            print "Using Rob's ANN"
+            ann_model = torch.load('ann_v2_weights.pt') 
+            print "Using ANN V1"
         else:
             ann_model_filename_akan = rospy.get_param('~ann_model_filename_akan', './models/ann_model.hdf5')
             #Load Akan's feature scaler

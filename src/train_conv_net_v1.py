@@ -108,7 +108,7 @@ optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 losses = []
 
-epochs = 1000
+epochs = 50000
 for epoch in range(epochs):
     
     y_pred = model(X_train)
@@ -126,7 +126,7 @@ for epoch in range(epochs):
     for name, param in model.named_parameters():
         writer.add_histogram(name,  param, epoch)
 
-torch.save(model, '../models/ann_weights.pt')
+torch.save(model, '../cnn_v1_weights.pt')
 
 t = time.time()
 y_pred = model(X_test)

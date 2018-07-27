@@ -54,7 +54,7 @@ Y_test = Variable(torch.from_numpy(Y_test).float()).contiguous()
 
 losses = []
 
-epochs = 100000
+epochs = 50000
 for epoch in range(epochs):
     
     y_pred = model(X_train)
@@ -69,7 +69,7 @@ for epoch in range(epochs):
     print "Epoch " + str(epoch)+ ". Loss: " + str(loss.data.numpy())
     losses.append(loss.data.numpy())
 
-    torch.save(model, '../models/ann_weights.pt')
+    torch.save(model, '../ann_v1_weights.pt')
     
     for name, param in model.named_parameters():
         writer.add_histogram(name,  param, epoch)

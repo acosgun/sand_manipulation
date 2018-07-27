@@ -48,7 +48,7 @@ Y_test = Variable(torch.from_numpy(Y_test).float())
 
 losses = []
 
-epochs = 10000
+epochs = 50000
 for epoch in range(epochs):
     #mini-batching
     rand_index = np.random.choice(100, size=batch_size)
@@ -63,7 +63,7 @@ for epoch in range(epochs):
     print "Epoch " + str(epoch)+ ". Loss: " + str(loss.data.numpy())
     losses.append(loss.data.numpy())
 
-    torch.save(model, '../models/ann_weights.pt')
+    torch.save(model, '../ann_v2_weights.pt')
 
     for name, param in model.named_parameters():
         writer.add_histogram(name,  param, epoch)
