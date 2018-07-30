@@ -25,6 +25,7 @@ def crop_push_points(points):
 def contour_callback(msg):    
     msg_actions = SandActions()
     msg_actions.header.stamp = rospy.Time.now()
+    msg_actions.contour = msg.data
         
     if use_robs_model == False and ann_model is not None and ann_scale is not None:
         X_in = np.array(msg.data)
@@ -59,6 +60,7 @@ def contour_callback(msg):
         msg_actions.ann_push.start.y = int(ann_points_cropped[1])
         msg_actions.ann_push.end.x = int(ann_points_cropped[2])
         msg_actions.ann_push.end.y = int(ann_points_cropped[3])
+        
         
   
     #Poly Regression

@@ -26,6 +26,7 @@ max_blue = np.array([255,255,56])
 kernel = np.ones((2,2), np.uint8)
 num_iter = 2
 point_reached = False
+data_logged = True
 count_against_stuck = 0
 
 CURR_POSE = None
@@ -38,6 +39,8 @@ method = None
 fontface = cv2.FONT_HERSHEY_SIMPLEX
 font_color = (50,50,250)
 font_size = 0.7
+img_log_counter = 0
+
 
 tool = "straight" # "straight"
 
@@ -93,7 +96,8 @@ def get_start_end_points(method):
 def find_blue(msg):
     global vel, im_size, point_reached
     global centroid, state
-
+    global data_logged, img_log_counter
+    
     cvb = cv_bridge.CvBridge()
     # Convert into opencv matrix
     img = cvb.imgmsg_to_cv2(msg, 'bgr8')
@@ -120,12 +124,33 @@ def find_blue(msg):
     if state == 0: #Waiting for command
         cv2.putText(img, "Action: Idle", (20, 40), fontface, font_size, font_color, 2)
         pass
-    elif state == 1: #VS to A
+    elif state == 1: #VS to A        
+        if not data_logged:
+            [start, end, method_text] = get_start_end_points(method)
+            img_name = "/home/acrv/andrea_sand_data/ros_ws/src/sandman/logs/img" + str(img_log_counter) + ".png"
+            img_log_counter = img_log_counter + 1
+
+            file = open("/home/acrv/andrea_sand_data/ros_ws/src/sandman/logs/logged_data.txt", "a")
+            file.write(str(img_log_counter) + "\t")
+            file.write(str(ord(method)) + "\t")
+            file.write(str(start.x) + "\t")
+            file.write(str(start.y) + "\t")
+            file.write(str(end.x) + "\t")
+            file.write(str(end.y) + "\t")
+            global sand_actions_msg
+            for i in xrange(len(sand_actions_msg.contour)):
+                file.write(str(sand_actions_msg.contour[i]) + "\t")
+            file.write("\n")
+            file.close()
+            cv2.imwrite(img_name, img)
+            
+            data_logged = True
+
         if not point_reached:
             print("VS to A")
 
             [start, end, method_text] = get_start_end_points(method)
-
+            
             #print "Start: " + str(start.x) + ", " + str(start.y)
             #print "End: " + str(end.x) + ", " + str(end.y)
             #goal_x = points[0]
@@ -387,12 +412,14 @@ def command_generator_callback(msg):
     global state
     global point_reached
     global method
+    global data_logged
     
     if msg.data == "a" or msg.data == "b" or msg.data == "c" or msg.data == "d":
         if state == 0:
             method = msg.data
             state = 1
             point_reached = False
+            data_logged = False
             print "Enabling Robot Action"
     elif msg.data == "h":
         state = 3

@@ -1,4 +1,5 @@
 Header header
+int32[] contour
 PushAction ann_push
 PushAction polyreg_push
 PushAction maxdist_push
