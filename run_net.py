@@ -146,7 +146,7 @@ if __name__ == '__main__':
             import torch.nn.functional as F
             from torch.autograd import Variable
             print("ciao")
-            ann_model = torch.load('ann_v2_weights.pt') 
+            ann_model = torch.load('cnn_v1_weights.pt') 
             print "Using ANN V1"
         else:
             ann_model_filename_akan = rospy.get_param('~ann_model_filename_akan', './models/ann_model.hdf5')
