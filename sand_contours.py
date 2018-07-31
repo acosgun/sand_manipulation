@@ -64,9 +64,9 @@ def draw_candidate_pushes(img):
     global sand_actions_msg
     brush_width = 4
     if sand_actions_msg is not None:
-        draw_push(img, sand_actions_msg.ann_push, brush_width, (12,255,255), "Neural Net", (50, 30)) #Yellow
-        draw_push(img, sand_actions_msg.polyreg_push, brush_width, (0,255,125), "Poly Regression", (50, 50))
-        draw_push(img, sand_actions_msg.average_push, brush_width, (12,120,255), "Avg Contour", (50, 70))
+        #draw_push(img, sand_actions_msg.ann_push, brush_width, (12,255,255), "Neural Net", (50, 30)) #Yellow
+        #draw_push(img, sand_actions_msg.polyreg_push, brush_width, (0,255,125), "Poly Regression", (50, 50))
+        #draw_push(img, sand_actions_msg.average_push, brush_width, (12,120,255), "Avg Contour", (50, 70))
         draw_push(img, sand_actions_msg.maxdist_push, brush_width, (255, 255, 0), "Max Contour", (50, 90))
 
 def sand_actions_callback(msg):
@@ -90,32 +90,47 @@ def image_capture(msg):
         save_new = False
     this_ref = image_ref.copy()
     box = get_roi(img.copy())
-    if box is not None:
-        img_contours = sample_contours(get_contours(img.copy(), box))
-        ref_contours = sample_contours(get_contours(image_ref.copy(), box))
+    #print "BOX Width: " + str(box.bot_right_x-box.x)
+    #print "BOX Y: " + str(box.y)
+    
+    if box is None:
+        print "BOX IS NONE!!"
+    else:
 
+        curCont = get_contours(img.copy(), box, True)
+        refCont = get_contours(image_ref.copy(), box, False)
+        
+        img_contours = sample_contours(curCont, 10)
+        ref_contours = sample_contours(refCont, 10)
+            
+        if curCont is not None and len(curCont) > 0:
+            cv2.drawContours(this_ref, curCont, -1, (255,0,0), 0)
+    
+        if refCont is not None and len(refCont) > 0:
+            cv2.drawContours(this_ref, refCont, -1, (0,0,255), 0)
+        
+        cv2.rectangle(img, (box.x, box.y), (box.bot_right_x, box.bot_right_y), (255,0,0))
+        
+        if img_contours is not None:
+            final_curr = img_contours
+            for contour in img_contours:
+                #for p in contour:
+                #cv2.circle(img, tuple(p[0]), 2, [255, 0, 0], thickness=2)
+                for idx,p in enumerate(contour):
+                    #cv2.circle(img, tuple(p[0]), 2, [255, 0, 0], thickness=2)
+                    cv2.putText(img, str(idx), tuple(p[0]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, [255, 0, 0], thickness=2)
+
+        
         if ref_contours is not None:
             final_ref = ref_contours
             for contour in ref_contours:
                 #for p in contour:
                 for idx,p in enumerate(contour):
-                    cv2.circle(this_ref, tuple(p[0]), 2, [255, 0, 0], thickness=2)
-                    #cv2.putText(this_ref, str(idx), tuple(p[0]), cv2.FONT_HERSHEY_SIMPLEX, 1, [255, 0, 0], thickness=2)
+                    #cv2.circle(img, tuple(p[0]), 2, [0, 0, 255], thickness=2)
+                    cv2.putText(img, str(idx), tuple(p[0]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, [0, 0, 255], thickness=2)
+                                
 
-            cv2.rectangle(this_ref, (box.x, box.y), (box.bot_right_x, box.bot_right_y), (255,0,0))
         
-
-        if img_contours is not None:
-            final_curr = img_contours
-            for contour in img_contours:
-                #for p in contour:
-                    #cv2.circle(img, tuple(p[0]), 2, [255, 0, 0], thickness=2)
-                for idx,p in enumerate(contour):
-                    cv2.circle(img, tuple(p[0]), 2, [255, 0, 0], thickness=2)
-                    #cv2.putText(img, str(idx), tuple(p[0]), cv2.FONT_HERSHEY_SIMPLEX, 1, [255, 0, 0], thickness=2)
-
-            cv2.rectangle(img, (box.x, box.y), (box.bot_right_x, box.bot_right_y), (255,0,0))
-
         if ref_contours is None or img_contours is None:
             print("I think I am done! DO NOT PRESS a ON COMMAND GENERATOR - it wouldn't make sense!")
             
@@ -130,7 +145,7 @@ def image_capture(msg):
         cv2.imshow("Image_Ref", this_ref)
         cv2.waitKey(1)
 
-def sample_contours(contours):
+def sample_contours(contours, num):
     #if len(contours) > 0:
         #contour = contours[0]
         #samples = []
@@ -150,13 +165,13 @@ def sample_contours(contours):
     if contours is not None and len(contours) > 0:
         contour = contours[0]
         samples = []
-        if len(contour) > 10:
+        if len(contour) > num:
             length = float(len(contour))
-            for i in range(10):
-                sample = contour[int(math.ceil(i * length / 10))]
+            for i in range(num):
+                sample = contour[int(math.ceil(i * length / num))]
                 samples.append(sample)
 
-            assert len(samples) == 10
+            assert len(samples) == num
 
             return [samples]
         else:
@@ -166,7 +181,7 @@ def sample_contours(contours):
         print("NOT ENOUGH POINTS: less than 1 point in contours")
         return None
 
-def get_contours(image, roi):
+def get_contours(image, roi, draw_test):
     MIN_PIXELS = 50
     lower = np.array([0, 0, 100])
     upper = np.array([255, 50, 255])
@@ -176,13 +191,21 @@ def get_contours(image, roi):
     hsv = cv2.cvtColor(cropped, cv2.COLOR_BGR2HSV)
     thresh  = cv2.inRange(hsv, lower, upper)
 
-    _, contours, _= cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-                                                      cv2.CHAIN_APPROX_NONE)
+    kernel = np.ones((5,5), np.uint8)
+    thresh = cv2.dilate(thresh, kernel, iterations=1)
+    thresh = cv2.erode(thresh, kernel, iterations=1)
 
+    _, contours, _= cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    
+    if draw_test:
+        cv2.namedWindow("TEST")
+        cv2.imshow("TEST", thresh)
+                
     if len(contours) > 0:
         contours = filter_contours(contours, MIN_PIXELS)
         if contours is not None:
-            contours = remove_border(contours, roi, thresh=5)
+            contours = remove_border(contours, roi, thresh=1)#was 5
 
     return contours
    
@@ -220,7 +243,7 @@ def filter_contours(contours, thresh):
 
 def get_roi(img):
     # Binary threshold value
-    THRESH     = 50
+    THRESH     = 35
     MIN_PIXELS = 200 #500 # Min size for cont
     MAX_DIST   = 3
 
@@ -286,7 +309,7 @@ if __name__ == '__main__':
 
     image_sub = rospy.Subscriber('/camera/rgb/image_raw', sensor_msgs.msg.Image, image_capture, queue_size=1) #listen robot position
     actions_sub = rospy.Subscriber('/sand_actions', SandActions, sand_actions_callback, queue_size=1)
-    pub = rospy.Publisher('contours', Int32MultiArray, queue_size=10)
+    pub = rospy.Publisher('contours', Int32MultiArray, queue_size=1)
 
     
     # Publish velocity at 100Hz.
@@ -306,4 +329,6 @@ if __name__ == '__main__':
 
             final_contours.data = data
             pub.publish(final_contours)
+            final_ref = None
+            final_curr = None
         r.sleep()
