@@ -128,8 +128,6 @@ def find_blue(msg):
         if not data_logged:
             [start, end, method_text] = get_start_end_points(method)
             img_name = "/home/acrv/andrea_sand_data/ros_ws/src/sandman/logs/img" + str(img_log_counter) + ".png"
-            img_log_counter = img_log_counter + 1
-
             file = open("/home/acrv/andrea_sand_data/ros_ws/src/sandman/logs/logged_data.txt", "a")
             file.write(str(img_log_counter) + "\t")
             file.write(str(ord(method)) + "\t")
@@ -143,7 +141,8 @@ def find_blue(msg):
             file.write("\n")
             file.close()
             cv2.imwrite(img_name, img)
-            
+
+            img_log_counter = img_log_counter + 1
             data_logged = True
 
         if not point_reached:

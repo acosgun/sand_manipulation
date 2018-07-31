@@ -102,8 +102,8 @@ def image_capture(msg):
         
         img_contours = sample_contours(curCont, 10)
         ref_contours = sample_contours(refCont, 10)
-            
-        if curCont is not None and len(curCont) > 0:
+        
+        if curCont is not None:
             cv2.drawContours(this_ref, curCont, -1, (255,0,0), 0)
     
         if refCont is not None and len(refCont) > 0:
@@ -172,7 +172,8 @@ def sample_contours(contours, num):
                 samples.append(sample)
 
             assert len(samples) == num
-
+            samples = sorted(samples, key=lambda x: x[0][1], reverse = False)
+                             
             return [samples]
         else:
             print("NOT ENOUGH POINTS: less than 10 points in samples")
@@ -197,16 +198,15 @@ def get_contours(image, roi, draw_test):
 
     _, contours, _= cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-    
+    '''
     if draw_test:
         cv2.namedWindow("TEST")
         cv2.imshow("TEST", thresh)
-                
-    if len(contours) > 0:
+    '''            
+    if contours is not None and len(contours) > 0:
         contours = filter_contours(contours, MIN_PIXELS)
         if contours is not None:
             contours = remove_border(contours, roi, thresh=1)#was 5
-
     return contours
    
 def remove_border(contours, roi, thresh=2):
