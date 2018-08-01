@@ -6,12 +6,66 @@ import numpy as np
 from sandman.msg import SandActions
 from std_msgs.msg import Int32MultiArray
 
+scaler = None
 regression_model = None
 regression_scale = None
 ann_model = None
 ann_model2 = None
 ann_scale = None
 ann_new_scale = None
+
+def calc_contour_error(X1,X2, middle_ind):
+    err = 0
+    cnt = 0
+    for i in xrange(0, middle_ind, 2):
+        x1 = X1[i]
+        y1 = X1[i+1]
+        x2 = X2[i]
+        y2 = X2[i+1]
+
+        a = np.array((x1,y1))
+        b = np.array((x2,y2))
+        dist = np.linalg.norm(a-b)
+        err = err + dist
+        cnt = cnt + 1
+
+    avg_err = err/cnt
+    return avg_err
+        
+def interpolate_contours(X_in):
+    desired_err = 40.0    
+    X = list(X_in)
+    middle_ind = len(X)/2
+    X1 = X[0:middle_ind]
+    X2 = X[middle_ind:]
+    error = calc_contour_error(X1,X2,middle_ind)
+    if error < desired_err:
+        return X_in
+    coeff = 1/(error/desired_err)
+    #print "err: " + str(error) + "coeff: " + str(coeff)
+    new_X2 = []
+
+    for i in xrange(0, middle_ind, 2):
+        x1 = X1[i]
+        y1 = X1[i+1]
+        x2 = X2[i]
+        y2 = X2[i+1]
+
+        new_x2 = int(x2*coeff + x1*(1-coeff))
+        new_y2 = int(y2*coeff + y1*(1-coeff))
+        '''
+        print "Coeff: " + str(coeff)
+        print "x1: " + str(x1)
+        print "y1: " + str(y1)
+        print "x2: " + str(x2)
+        print "y2: " + str(y2)
+        print "new_x2: " + str(new_x2)
+        print "new_y2: " + str(new_y2)
+        '''
+        new_X2.append(new_x2)
+        new_X2.append(new_y2)
+        
+    return X1+new_X2
 
 def crop_push_points(points):
     global crop_x_min, crop_x_max, crop_y_min, crop_y_max
@@ -24,6 +78,9 @@ def crop_push_points(points):
     return points_out
         
 def contour_callback(msg):    
+
+    enable_interpolation = True
+
     msg_actions = SandActions()
     msg_actions.header.stamp = rospy.Time.now()
     msg_actions.contour = msg.data
@@ -41,26 +98,60 @@ def contour_callback(msg):
         msg_actions.ann_push.start.y = int(ann_points_cropped[1])
         msg_actions.ann_push.end.x = int(ann_points_cropped[2])
         msg_actions.ann_push.end.y = int(ann_points_cropped[3])
-        
-    
+            
     #Rob's model
     if use_robs_model == True and ann_model is not None:
-        import torch
-        import torch.nn as nn
-        import torch.nn.functional as F
-        from torch.autograd import Variable
-        from numpy import zeros, newaxis
-        X_ann = np.array(msg.data).reshape((1, 40))
-        X_ann = X_ann[:, newaxis, :]
-        x = Variable(torch.from_numpy(X_ann).float())
-        y = ann_model(x)
-        y_pred = y.data.numpy()  
-        y_pred = y_pred.flatten()
-        ann_points_cropped = crop_push_points(y_pred)
-        msg_actions.ann_push.start.x = int(ann_points_cropped[0])
-        msg_actions.ann_push.start.y = int(ann_points_cropped[1])
-        msg_actions.ann_push.end.x = int(ann_points_cropped[2])
-        msg_actions.ann_push.end.y = int(ann_points_cropped[3])
+
+        #Feat Scaling
+        if enable_feat_scaling:            
+            X_in = np.array(msg.data)
+            if enable_interpolation:
+                X_in = interpolate_contours(X_in)
+            X_in = np.asarray(X_in)
+            X_in = X_in.reshape(1, -1)
+            X_in_transformed = scaler.transform(X_in)
+            
+            import torch
+            import torch.nn as nn
+            import torch.nn.functional as F
+            from torch.autograd import Variable
+            from numpy import zeros, newaxis
+            
+            #X_ann = np.array(msg.data).reshape((1, 40))            
+            X_ann = X_in_transformed[:, newaxis, :]
+            x = Variable(torch.from_numpy(X_ann).float())
+            y = ann_model(x)
+            y_pred = y.data.numpy()  
+            y_pred = y_pred.flatten()
+            ann_points_cropped = crop_push_points(y_pred)
+            msg_actions.ann_push.start.x = int(ann_points_cropped[0])
+            msg_actions.ann_push.start.y = int(ann_points_cropped[1])
+            msg_actions.ann_push.end.x = int(ann_points_cropped[2])
+            msg_actions.ann_push.end.y = int(ann_points_cropped[3])
+        else:            
+            import torch
+            import torch.nn as nn
+            import torch.nn.functional as F
+            from torch.autograd import Variable
+            from numpy import zeros, newaxis
+
+            X_in = np.array(msg.data)
+            if enable_interpolation:
+                X_in = interpolate_contours(X_in)
+            X_in = np.asarray(X_in)
+            X_in = X_in.reshape(1, -1)
+            
+            #X_ann = np.array(msg.data).reshape((1, 40))            
+            X_ann = X_in[:, newaxis, :]
+            x = Variable(torch.from_numpy(X_ann).float())
+            y = ann_model(x)
+            y_pred = y.data.numpy()  
+            y_pred = y_pred.flatten()
+            ann_points_cropped = crop_push_points(y_pred)
+            msg_actions.ann_push.start.x = int(ann_points_cropped[0])
+            msg_actions.ann_push.start.y = int(ann_points_cropped[1])
+            msg_actions.ann_push.end.x = int(ann_points_cropped[2])
+            msg_actions.ann_push.end.y = int(ann_points_cropped[3])
 
         
     #Valerio's model (Pushed as Poly Reg)
@@ -70,8 +161,15 @@ def contour_callback(msg):
         import torch.nn.functional as F
         from torch.autograd import Variable
         from numpy import zeros, newaxis
-        X_ann = np.array(msg.data).reshape((1, 40))
-        X_ann = X_ann[:, newaxis, :]
+
+        X_in = np.array(msg.data)
+        if enable_interpolation:
+            X_in = interpolate_contours(X_in)
+        X_in = np.asarray(X_in)
+        X_in = X_in.reshape(1, -1)
+
+        #X_ann = np.array(msg.data).reshape((1, 40))
+        X_ann = X_in[:, newaxis, :]
         x = Variable(torch.from_numpy(X_ann).float())
         y = ann_model2(x)
         y_pred = y.data.numpy()  
@@ -97,7 +195,10 @@ def contour_callback(msg):
         msg_actions.polyreg_push.end.y = int(polyreg_points_cropped[3])
         
     #Average and Max Dist
+
     X = list(msg.data)
+    if enable_interpolation:
+        X = interpolate_contours(X)
     middle_ind = len(X)/2
     X1 = X[0:middle_ind]
     X2 = X[middle_ind:]
@@ -161,7 +262,13 @@ if __name__ == '__main__':
     crop_y_max = rospy.get_param('~crop_y_max', 480)
 
     use_robs_model = rospy.get_param('~use_robs_model', True)
-    
+
+    # Load feature scaler
+    enable_feat_scaling = False
+    if enable_feat_scaling:
+        from sklearn.externals import joblib
+        scaler = joblib.load("/home/acrv/andrea_sand_data/ros_ws/src/sandman/models/scale.pk")
+        
     #Load ANN
     try:
         if use_robs_model:
@@ -193,7 +300,7 @@ if __name__ == '__main__':
         import torch.nn.functional as F
         from torch.autograd import Variable
         ann_model2 = torch.load('/home/acrv/andrea_sand_data/ros_ws/src/sandman/cnn_v1_weights.pt') 
-        print "Using CNN"
+        print "Using CNN"        
         
         '''
         # Load feature scaler

@@ -90,18 +90,29 @@ def image_capture(msg):
         save_new = False
     this_ref = image_ref.copy()
     box = get_roi(img.copy())
-    #print "BOX Width: " + str(box.bot_right_x-box.x)
-    #print "BOX Y: " + str(box.y)
     
     if box is None:
         print "BOX IS NONE!!"
     else:
+        cur_thresh_img = get_thresh_img(img.copy(), box)
+        ref_thresh_img = get_thresh_img(image_ref.copy(), box)
+
+        out_box = find_feasible_contours(box, cur_thresh_img, ref_thresh_img, enable_box_chop = True)
+        if out_box is None:
+            print "Out box is None!"
+            return
+        box = out_box
+        
+        #curCont = get_contours(img.copy(), box, True)
+        #refCont = get_contours(image_ref.copy(), box, False)        
+        #img_contours = sample_contours(curCont, 10, True)
+        #ref_contours = sample_contours(refCont, 10, True)
 
         curCont = get_contours(img.copy(), box, True)
-        refCont = get_contours(image_ref.copy(), box, False)
+        refCont = get_contours(image_ref.copy(), box, False)        
+        img_contours = sample_contours(curCont, 10, True)
+        ref_contours = sample_contours(refCont, 10, True)
         
-        img_contours = sample_contours(curCont, 10)
-        ref_contours = sample_contours(refCont, 10)
         if curCont is not None:
             cv2.drawContours(this_ref, curCont, -1, (255,0,0), 0)
     
@@ -144,23 +155,7 @@ def image_capture(msg):
         cv2.imshow("Image_Ref", this_ref)
         cv2.waitKey(1)
 
-def sample_contours(contours, num):
-    #if len(contours) > 0:
-        #contour = contours[0]
-        #samples = []
-        #if len(contour) > 10:
-            #length = float(len(contour))
-            #for i in range(10):
-                #sample = contour[int(math.ceil(i * length / 10))]
-                #samples.append(sample)
-
-            #assert len(samples) == 10
-
-            #return [samples]
-        #else:
-            # print("NOT ENOUGH POINTS")
-            #return None
-    #return None
+def sample_contours(contours, num, verbose):
     if contours is not None and len(contours) > 0:
         contour = contours[0]
         samples = []
@@ -175,11 +170,84 @@ def sample_contours(contours, num):
                              
             return [samples]
         else:
-            print("NOT ENOUGH POINTS: less than 10 points in samples")
+            if verbose:
+                print("NOT ENOUGH POINTS: less than 10 points in samples")
             return None
     else:
-        print("NOT ENOUGH POINTS: less than 1 point in contours")
+        if verbose:
+            print("NOT ENOUGH POINTS: less than 1 point in contours")
         return None
+
+def get_thresh_img(image, roi):
+    MIN_PIXELS = 50
+    lower = np.array([0, 0, 100])
+    upper = np.array([255, 50, 255])
+
+    cropped = image[roi.y:roi.y+roi.h, roi.x:roi.x+roi.w]
+
+    hsv = cv2.cvtColor(cropped, cv2.COLOR_BGR2HSV)
+    thresh  = cv2.inRange(hsv, lower, upper)
+
+    kernel = np.ones((5,5), np.uint8)
+    thresh = cv2.dilate(thresh, kernel, iterations=1)
+    thresh = cv2.erode(thresh, kernel, iterations=1)
+    return thresh        
+
+def find_feasible_contours(roi, cur_thresh_img, ref_thresh_img, enable_box_chop):
+
+    if enable_box_chop is False:
+        return roi
+    
+    MIN_PIXELS = 50
+    init_desired_box_height = 100
+    end_desired_box_height = 200
+    step_h = 20
+    num_h_samples = 20
+    
+    if enable_box_chop:
+
+        for desired_box_height in xrange(init_desired_box_height,end_desired_box_height,step_h):
+            if roi.h < desired_box_height:
+                return roi
+            
+            for i in xrange(num_h_samples):            
+                #sample new y_top                
+                from random import randint
+                y_min = roi.y
+                y_max = roi.y + roi.h - desired_box_height
+                new_y_top = randint(y_min, y_max)                
+                
+                #get chopped images
+                cur_chopped_img = cur_thresh_img[new_y_top:new_y_top+desired_box_height,:]
+                ref_chopped_img = ref_thresh_img[new_y_top:new_y_top+desired_box_height,:]
+                
+                #find contours in the chopped images
+                _, cur_contours, _= cv2.findContours(cur_chopped_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+                _, ref_contours, _= cv2.findContours(ref_chopped_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+                
+                if cur_contours is None or ref_contours is None:
+                    continue
+                else:            
+                    cur_contours = filter_contours(cur_contours, MIN_PIXELS)
+                    ref_contours = filter_contours(ref_contours, MIN_PIXELS)
+                    if cur_contours is None or ref_contours is None:
+                        continue
+                    else:
+                        new_roi = Box(roi.x, new_y_top, roi.w, desired_box_height)
+                        
+                        cur_contours = remove_border(cur_contours, new_roi, thresh=1)
+                        ref_contours = remove_border(ref_contours, new_roi, thresh=1)
+                        
+                        if cur_contours is None or ref_contours is None:
+                            continue
+                        else:
+                            cur_contours = sample_contours(cur_contours, 10, False)
+                            ref_contours = sample_contours(ref_contours, 10, False)
+                            if cur_contours is None or ref_contours is None:
+                                continue
+                            else:                            
+                                return new_roi
+    return roi
 
 def get_contours(image, roi, draw_test):
     MIN_PIXELS = 50
@@ -196,7 +264,6 @@ def get_contours(image, roi, draw_test):
     thresh = cv2.erode(thresh, kernel, iterations=1)
 
     _, contours, _= cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
     
     if draw_test:
         cv2.namedWindow("TEST")
@@ -207,6 +274,7 @@ def get_contours(image, roi, draw_test):
         if contours is not None:
             contours = remove_border(contours, roi, thresh=1)#was 5
     return contours
+
    
 def remove_border(contours, roi, thresh=2):
     new_contours = []
@@ -221,6 +289,7 @@ def remove_border(contours, roi, thresh=2):
 
 def get_box(contour):
     box = Box(*cv2.boundingRect(contour))
+    
     '''
     padding = 0
     box.x = box.x - padding
@@ -235,6 +304,8 @@ def centroid_dist(box, largest):
 
 
 def filter_contours(contours, thresh):
+    if contours is None:
+        return None
     # Sort contours and filter
     largestContours = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
     largestContours = [contour for contour in largestContours if cv2.contourArea(contour) > thresh]
