@@ -64,9 +64,9 @@ def draw_candidate_pushes(img):
     global sand_actions_msg
     brush_width = 4
     if sand_actions_msg is not None:
-        #draw_push(img, sand_actions_msg.ann_push, brush_width, (12,255,255), "Neural Net", (50, 30)) #Yellow
-        #draw_push(img, sand_actions_msg.polyreg_push, brush_width, (0,255,125), "Poly Regression", (50, 50))
-        #draw_push(img, sand_actions_msg.average_push, brush_width, (12,120,255), "Avg Contour", (50, 70))
+        draw_push(img, sand_actions_msg.ann_push, brush_width, (12,255,255), "Neural Net", (50, 30)) #Yellow
+        draw_push(img, sand_actions_msg.polyreg_push, brush_width, (0,255,125), "Poly Regression", (50, 50))
+        draw_push(img, sand_actions_msg.average_push, brush_width, (12,120,255), "Avg Contour", (50, 70))
         draw_push(img, sand_actions_msg.maxdist_push, brush_width, (255, 255, 0), "Max Contour", (50, 90))
 
 def sand_actions_callback(msg):
@@ -102,7 +102,6 @@ def image_capture(msg):
         
         img_contours = sample_contours(curCont, 10)
         ref_contours = sample_contours(refCont, 10)
-        
         if curCont is not None:
             cv2.drawContours(this_ref, curCont, -1, (255,0,0), 0)
     
@@ -198,11 +197,11 @@ def get_contours(image, roi, draw_test):
 
     _, contours, _= cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-    '''
+    
     if draw_test:
         cv2.namedWindow("TEST")
         cv2.imshow("TEST", thresh)
-    '''            
+                
     if contours is not None and len(contours) > 0:
         contours = filter_contours(contours, MIN_PIXELS)
         if contours is not None:
@@ -222,6 +221,11 @@ def remove_border(contours, roi, thresh=2):
 
 def get_box(contour):
     box = Box(*cv2.boundingRect(contour))
+    '''
+    padding = 0
+    box.x = box.x - padding
+    box.bot_right_x = box.bot_right_x + padding
+    '''
     return box
 
 def centroid_dist(box, largest):

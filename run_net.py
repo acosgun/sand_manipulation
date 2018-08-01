@@ -9,6 +9,7 @@ from std_msgs.msg import Int32MultiArray
 regression_model = None
 regression_scale = None
 ann_model = None
+ann_model2 = None
 ann_scale = None
 ann_new_scale = None
 
@@ -60,11 +61,30 @@ def contour_callback(msg):
         msg_actions.ann_push.start.y = int(ann_points_cropped[1])
         msg_actions.ann_push.end.x = int(ann_points_cropped[2])
         msg_actions.ann_push.end.y = int(ann_points_cropped[3])
+
+        
+    #Valerio's model (Pushed as Poly Reg)
+    if ann_model2 is not None:
+        import torch
+        import torch.nn as nn
+        import torch.nn.functional as F
+        from torch.autograd import Variable
+        from numpy import zeros, newaxis
+        X_ann = np.array(msg.data).reshape((1, 40))
+        X_ann = X_ann[:, newaxis, :]
+        x = Variable(torch.from_numpy(X_ann).float())
+        y = ann_model2(x)
+        y_pred = y.data.numpy()  
+        y_pred = y_pred.flatten()
+        ann_points_cropped = crop_push_points(y_pred)
+        msg_actions.polyreg_push.start.x = int(ann_points_cropped[0])
+        msg_actions.polyreg_push.start.y = int(ann_points_cropped[1])
+        msg_actions.polyreg_push.end.x = int(ann_points_cropped[2])
+        msg_actions.polyreg_push.end.y = int(ann_points_cropped[3])
         
         
-  
     #Poly Regression
-    if regression_model is not None and regression_scale is not None:
+    if False or regression_model is not None and regression_scale is not None:
         X_in = np.array(msg.data)
         X_in = np.asarray(X_in)
         X_in = X_in.reshape(1, -1)
@@ -75,7 +95,7 @@ def contour_callback(msg):
         msg_actions.polyreg_push.start.y = int(polyreg_points_cropped[1])
         msg_actions.polyreg_push.end.x = int(polyreg_points_cropped[2])
         msg_actions.polyreg_push.end.y = int(polyreg_points_cropped[3])
-
+        
     #Average and Max Dist
     X = list(msg.data)
     middle_ind = len(X)/2
@@ -122,7 +142,7 @@ def contour_callback(msg):
     msg_actions.average_push.start.y = y1_mean
     msg_actions.average_push.end.x = x2_mean
     msg_actions.average_push.end.y = y2_mean
-                
+
     pub_actions.publish(msg_actions)
     
     
@@ -132,6 +152,8 @@ if __name__ == '__main__':
     ann_scale_filename = rospy.get_param('~ann_scale_filename', './models/ann_scale.pkl')
     regression_model_filename = rospy.get_param('~regression_model_filename', './models/regression_model.pkl')
     regression_scale_filename = rospy.get_param('~regression_scale_filename', './models/regression_scale.pkl')
+
+    print regression_model_filename
     
     crop_x_min = rospy.get_param('~crop_x_min', 0)
     crop_x_max = rospy.get_param('~crop_x_max', 640)
@@ -147,9 +169,8 @@ if __name__ == '__main__':
             import torch.nn as nn
             import torch.nn.functional as F
             from torch.autograd import Variable
-            print("ciao")
-            ann_model = torch.load('cnn_v1_weights.pt') 
-            print "Using ANN V1"
+            ann_model = torch.load('/home/acrv/andrea_sand_data/ros_ws/src/sandman/ann_v1_weights.pt') 
+            print "Using ANN"
         else:
             ann_model_filename_akan = rospy.get_param('~ann_model_filename_akan', './models/ann_model.hdf5')
             #Load Akan's feature scaler
@@ -166,6 +187,15 @@ if __name__ == '__main__':
 
     #Load Polyreg
     try:
+        
+        import torch
+        import torch.nn as nn
+        import torch.nn.functional as F
+        from torch.autograd import Variable
+        ann_model2 = torch.load('/home/acrv/andrea_sand_data/ros_ws/src/sandman/cnn_v1_weights.pt') 
+        print "Using CNN"
+        
+        '''
         # Load feature scaler
 	from sklearn.externals import joblib
 	regression_scale = joblib.load(regression_scale_filename)
@@ -174,11 +204,10 @@ if __name__ == '__main__':
         import pickle
 	regression_model_pkl = open(regression_model_filename, 'rb')
 	regression_model = pickle.load(regression_model_pkl)
-        
+        '''
     except:
         print "Regression model can't be loaded"
         
-    #pub = rospy.Publisher('points', Int32MultiArray, queue_size=2)
     pub_actions = rospy.Publisher('sand_actions', SandActions, queue_size=2)
     rospy.Subscriber('contours', Int32MultiArray, contour_callback, queue_size=1)
     rospy.spin()

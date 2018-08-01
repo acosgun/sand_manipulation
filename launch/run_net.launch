@@ -6,9 +6,9 @@
     <param name="/ann_scale_filename" value="$(find sandman)/models/regression_scale_oldnew.pkl"/>
     <param name="/regression_model_filename" value="$(find sandman)/models/regression_model.pkl"/>
     <param name="/regression_scale_filename" value="$(find sandman)/models/regression_scale.pkl"/>
-    <param name="/crop_x_min" value="300"/>
+    <param name="/crop_x_min" value="0"/>
     <param name="/crop_x_max" value="640"/>
-    <param name="/crop_y_min" value="60"/>
-    <param name="/crop_y_max" value="420"/>
+    <param name="/crop_y_min" value="0"/>
+    <param name="/crop_y_max" value="480"/>
   </node>
 </launch>
