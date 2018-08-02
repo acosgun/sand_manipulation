@@ -19,6 +19,7 @@ from std_msgs.msg import String
 from std_msgs.msg import Int32MultiArray
 from sandman.msg import SandActions
 from sandman.msg import PushAction
+from sandman.msg import Pixel
 
 min_blue = np.array([110,0,0])
 max_blue = np.array([255,255,56])
@@ -40,9 +41,9 @@ fontface = cv2.FONT_HERSHEY_SIMPLEX
 font_color = (50,50,250)
 font_size = 0.7
 img_log_counter = 0
-
-
 tool = "straight" # "straight"
+
+enable_adjust_for_half_tool = True
 
 def send_robot_to_home():
 
@@ -66,7 +67,30 @@ def send_robot_to_home():
         print "2nd home reached"
     #TODO: UR5 implementation
 
+def get_adjusted_end_point(start,end):
+    half_tool_size = 27
+    a = np.array((start.x,start.y))
+    b = np.array((end.x,end.y))
+    dist = np.linalg.norm(a-b)
+    #print "dist: " + str(dist)
 
+    if dist > half_tool_size:
+        adj_dist = dist - half_tool_size
+        coeff = adj_dist/dist
+        #print "Coeff:" + str(coeff)
+        adj_end_x = int(start.x + (end.x - start.x) * coeff)
+        adj_end_y = int(start.y + (end.y - start.y) * coeff)
+        adj_end = Pixel()
+        adj_end.x = adj_end_x
+        adj_end.y = adj_end_y
+        #print "actual EE pix: "
+        #print end
+        #print "adjusted EE pix: "
+        #print adj_end
+        return adj_end
+    else:
+        return end
+    
 def get_start_end_points(method):
     start = None
     end = None
@@ -84,11 +108,21 @@ def get_start_end_points(method):
     elif method == "c":
         start = sand_actions_msg.average_push.start
         end = sand_actions_msg.average_push.end
+        
+        if enable_adjust_for_half_tool:
+            end = get_adjusted_end_point(start, sand_actions_msg.average_push.end)
+        else:
+            end = sand_actions_msg.average_push.end
+            
         text = "Avg Contour"
         #print("VS to A: Executing Average Contour")
     elif method == "d":
         start = sand_actions_msg.maxdist_push.start
-        end = sand_actions_msg.maxdist_push.end
+
+        if enable_adjust_for_half_tool:
+            end = get_adjusted_end_point(start, sand_actions_msg.maxdist_push.end)
+        else:
+            end = sand_actions_msg.maxdist_push.end
         text = "Max Contour"
         #print("VS to A: Executing Max Contour Distance")
     return (start, end, text)
@@ -126,7 +160,7 @@ def find_blue(msg):
         pass
     elif state == 1: #VS to Push Start Row
         if not data_logged:            
-            ###Data Log
+            ###Data Logx
             [start, end, method_text] = get_start_end_points(method)
             img_name = "/home/acrv/andrea_sand_data/ros_ws/src/sandman/logs/img" + str(img_log_counter) + ".png"
             file = open("/home/acrv/andrea_sand_data/ros_ws/src/sandman/logs/logged_data.txt", "a")

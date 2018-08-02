@@ -14,6 +14,9 @@ ann_model2 = None
 ann_scale = None
 ann_new_scale = None
 
+enable_interpolation = True
+enable_feat_scaling = False
+
 def calc_contour_error(X1,X2, middle_ind):
     err = 0
     cnt = 0
@@ -78,8 +81,6 @@ def crop_push_points(points):
     return points_out
         
 def contour_callback(msg):    
-
-    enable_interpolation = True
 
     msg_actions = SandActions()
     msg_actions.header.stamp = rospy.Time.now()
@@ -195,7 +196,6 @@ def contour_callback(msg):
         msg_actions.polyreg_push.end.y = int(polyreg_points_cropped[3])
         
     #Average and Max Dist
-
     X = list(msg.data)
     if enable_interpolation:
         X = interpolate_contours(X)
@@ -264,7 +264,6 @@ if __name__ == '__main__':
     use_robs_model = rospy.get_param('~use_robs_model', True)
 
     # Load feature scaler
-    enable_feat_scaling = False
     if enable_feat_scaling:
         from sklearn.externals import joblib
         scaler = joblib.load("/home/acrv/andrea_sand_data/ros_ws/src/sandman/models/scale.pk")

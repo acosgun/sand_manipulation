@@ -15,11 +15,6 @@ import rospy
 import tf.transformations as tft
 import numpy as np
 
-#from position_control import *
-#from kinova_msgs.msg import PoseVelocity
-#import kinova_msgs.msg
-#import kinova_msgs.srv
-
 from sandman.msg import SandActions
 from sandman.msg import PushAction
 from sandman.msg import Pixel
@@ -39,6 +34,8 @@ final_ref = None
 final_curr = None
 image_ref = None
 image_curr = np.zeros_like(image_ref)
+
+enable_box_chop = True
 
 class Box():
     def __init__(self, x,y,w,h):
@@ -97,7 +94,7 @@ def image_capture(msg):
         cur_thresh_img = get_thresh_img(img.copy(), box)
         ref_thresh_img = get_thresh_img(image_ref.copy(), box)
 
-        out_box = find_feasible_contours(box, cur_thresh_img, ref_thresh_img, enable_box_chop = True)
+        out_box = find_feasible_contours(box, cur_thresh_img, ref_thresh_img, enable_box_chop)
         if out_box is None:
             print "Out box is None!"
             return
@@ -127,7 +124,7 @@ def image_capture(msg):
                 #for p in contour:
                 #cv2.circle(img, tuple(p[0]), 2, [255, 0, 0], thickness=2)
                 for idx,p in enumerate(contour):
-                    #cv2.circle(img, tuple(p[0]), 2, [255, 0, 0], thickness=2)
+                    cv2.circle(img, tuple(p[0]), 2, [255, 0, 0], thickness=2)
                     cv2.putText(img, str(idx), tuple(p[0]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, [255, 0, 0], thickness=2)
 
         
@@ -136,11 +133,9 @@ def image_capture(msg):
             for contour in ref_contours:
                 #for p in contour:
                 for idx,p in enumerate(contour):
-                    #cv2.circle(img, tuple(p[0]), 2, [0, 0, 255], thickness=2)
+                    cv2.circle(img, tuple(p[0]), 2, [0, 0, 255], thickness=2)
                     cv2.putText(img, str(idx), tuple(p[0]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, [0, 0, 255], thickness=2)
-                                
-
-        
+                                        
         if ref_contours is None or img_contours is None:
             print("I think I am done! DO NOT PRESS a ON COMMAND GENERATOR - it wouldn't make sense!")
             
