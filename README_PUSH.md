@@ -58,7 +58,7 @@ python train_conv_net_v1.py
 
 9) Run ANN
 
-roslaunch sandman run_net.launch
+roslaunch launch/run_net.launch
 
 *If you are having issues with running keras neural net
 sudo pip install tensorflow

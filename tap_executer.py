@@ -27,7 +27,9 @@ max_blue = np.array([255,255,56])
 kernel = np.ones((2,2), np.uint8)
 num_iter = 2
 point_reached = False
+data_logged = True
 count_against_stuck = 0
+img_log_counter = 10000
 
 CURR_POSE = None
 centroid = None
@@ -64,22 +66,34 @@ def send_robot_to_home():
             goal_joint_pos = [371.0, 210.0, 50.0, 179.0, 58.0, 43.0, 0.0]
         move_to_joint_position(goal_joint_pos)
         print "1st home reached"
+
+        import time
+        time.sleep(0.5)
+        #goal_joint_pos = [371.0, 233.0, 70.0, 179.0, 58.0, 38.0, 0.0]
+        if tool == "straight":
+            goal_joint_pos = [379.8, 235.15, 54.43, 162.54, 112.29, 22.43, 0.0]
+        else:
+            goal_joint_pos = [371.0, 224.0, 50.0, 179.0, 58.0, 43.0, 0.0]
+        move_to_joint_position(goal_joint_pos)
+        print "2nd home reached"
+
+        
     #TODO: UR5 implementation
 
 
 def get_end_points(method):
     end = None
     text = None
-    if method == "a":
+    if method == "w":
         end = sand_actions_msg.ann_tap.end
         text = "Neural Net"
-    elif method == "b":
+    elif method == "x":
         end = sand_actions_msg.polyreg_tap.end
         text = "Poly Regression"
-    elif method == "c":
+    elif method == "y":
         end = sand_actions_msg.average_tap.end
         text = "Avg Contour"
-    elif method == "d":
+    elif method == "z":
         end = sand_actions_msg.maxdist_tap.end
         text = "Max Contour"
     return (end, text)
@@ -89,6 +103,7 @@ def find_blue(msg):
     global centroid, state
     global min_rows, max_rows, min_cols, max_cols, tool_size
     global goal_point
+    global data_logged, img_log_counter
 
     cvb = cv_bridge.CvBridge()
     # Convert into opencv matrix
@@ -115,6 +130,22 @@ def find_blue(msg):
         cv2.putText(img, "Tap Action: Idle", (20, 40), fontface, font_size, font_color, 2)
         pass
     elif state == 1: #VS to tap point
+        if not data_logged:            
+            ###Data Log
+            [end, method_text] = get_end_points(method)
+            img_name = "/home/acrv/andrea_sand_data/ros_ws/src/sandman/logs/img" + str(img_log_counter) + ".png"
+            file = open("/home/acrv/andrea_sand_data/ros_ws/src/sandman/logs/logged_data.txt", "a")
+            file.write(str(img_log_counter) + "\t")
+            file.write(str(ord(method)) + "\t")
+            file.write(str(end.x) + "\t")
+            file.write(str(end.y) + "\t")
+            file.write("\n")
+            file.close()
+            cv2.imwrite(img_name, img)
+            img_log_counter = img_log_counter - 1
+            data_logged = True
+            ###
+
         if not point_reached:
             print("VS to tapping point")
             [end, method_text] = get_end_points(method)
@@ -162,8 +193,8 @@ def find_blue(msg):
             cv2.circle(img, (tool_size*c+tool_size//2+min_cols, tool_size*r+tool_size//2), 5, (255, 255, 255), 1)
 
     
-    cv2.imshow('Executed Actions', img)
-    cv2.moveWindow('Executed Actions', 1280, 583)
+    cv2.imshow('TAP Actions', img)
+    cv2.moveWindow('TAP Actions', 660, 583)
     cv2.waitKey(1)
 
 def godown(desired_centroid, depth, img):
@@ -394,13 +425,20 @@ def command_generator_callback(msg):
     global state
     global point_reached
     global method
+    global data_logged
     
-    if msg.data == "a" or msg.data == "b" or msg.data == "c" or msg.data == "d":
+    if msg.data == "w" or msg.data == "x" or msg.data == "y" or msg.data == "z":
         if state == 0:
             method = msg.data
             state = 1
             point_reached = False
+            data_logged = False
             print "Enabling Robot Action"
+
+            from position_control import move_to_joint_position
+            goal_joint_pos = [383.7, 213.0, 55.1,  181.1,  80.7, 27.1, 0.0]
+            move_to_joint_position(goal_joint_pos)
+            
     elif msg.data == "h":
         state = 3
         print "Going Home"
@@ -413,7 +451,7 @@ if __name__ == '__main__':
     state = 0
     
     image_sub = rospy.Subscriber('/camera/rgb/image_raw', sensor_msgs.msg.Image, find_blue, queue_size=1)
-    actions_sub = rospy.Subscriber('/sand_actions', SandActions, sand_actions_callback, queue_size=1)
+    actions_sub = rospy.Subscriber('/sand_actions_tap', SandActions, sand_actions_callback, queue_size=1)
 
     if robot_type == "kinova":
         from kinova_msgs.msg import PoseVelocity
@@ -434,5 +472,6 @@ if __name__ == '__main__':
             # print(vel)
             if not point_reached and vel_pub is not None:
                 pass
+            if state != 0:
                 vel_pub.publish(vel)
         r.sleep()

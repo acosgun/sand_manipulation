@@ -8,10 +8,10 @@ if __name__ == '__main__':
     pub = rospy.Publisher('/commands', String, queue_size=10)
     print("Keys:")
     print("a + Enter: Execute ANN action recommendation")
-    print("b + Enter: Execute Poly Regression action recommendation")
+    print("b + Enter: Execute CNN action recommendation")
     print("c + Enter: Execute Contour Center action recommendation")
-    print("d + Enter: Execute Max Contour Difference action recommendation")
-    print("h + Enter: Robot goes to home position. This is buggy, though. Not recommended.")
+    print("d + Enter: Execute MAX Contour Difference action recommendation")
+    print("z + Enter: Execute MAX tap")
     print("q + Enter: Kill command_generator")
 
     while True:

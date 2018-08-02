@@ -61,8 +61,8 @@ def draw_candidate_pushes(img):
     global sand_actions_msg
     brush_width = 4
     if sand_actions_msg is not None:
-        draw_push(img, sand_actions_msg.ann_push, brush_width, (12,255,255), "Neural Net", (50, 30)) #Yellow
-        draw_push(img, sand_actions_msg.polyreg_push, brush_width, (0,255,125), "Poly Regression", (50, 50))
+        draw_push(img, sand_actions_msg.ann_push, brush_width, (12,255,255), "ANN", (50, 30)) #Yellow
+        draw_push(img, sand_actions_msg.polyreg_push, brush_width, (0,255,125), "CNN", (50, 50)) #GRN
         draw_push(img, sand_actions_msg.average_push, brush_width, (12,120,255), "Avg Contour", (50, 70))
         draw_push(img, sand_actions_msg.maxdist_push, brush_width, (255, 255, 0), "Max Contour", (50, 90))
 

@@ -30,11 +30,11 @@ else:
 
 optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
-X = np.loadtxt('../data/U_push_contours.txt')#dataU.mat')#
+X = np.loadtxt('../data/U_push_contours_V3.txt')#dataU.mat')#
 #X = X['dataU'].astype(float)
 X = X.astype(float)
 
-Y = np.loadtxt('../data/Y_push.txt')
+Y = np.loadtxt('../data/Y_push_V3.txt')
 #Y = io.loadmat('./data/dataY.mat')
 Y = Y.astype(float)
 
@@ -66,7 +66,7 @@ Y_test = Variable(torch.from_numpy(Y_test).float()).contiguous()
 
 losses = []
 
-epochs = 25000
+epochs = 50000
 for epoch in range(epochs):
     
     y_pred = model(X_train)

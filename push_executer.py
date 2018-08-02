@@ -160,7 +160,7 @@ def find_blue(msg):
         pass
     elif state == 1: #VS to Push Start Row
         if not data_logged:            
-            ###Data Logx
+            ###Data Log
             [start, end, method_text] = get_start_end_points(method)
             img_name = "/home/acrv/andrea_sand_data/ros_ws/src/sandman/logs/img" + str(img_log_counter) + ".png"
             file = open("/home/acrv/andrea_sand_data/ros_ws/src/sandman/logs/logged_data.txt", "a")
@@ -490,5 +490,6 @@ if __name__ == '__main__':
             # print(vel)
             if not point_reached and vel_pub is not None:
                 pass
+            if state != 0:
                 vel_pub.publish(vel)
         r.sleep()

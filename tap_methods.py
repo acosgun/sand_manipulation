@@ -178,7 +178,7 @@ if __name__ == '__main__':
     except:
         print "Regression model can't be loaded"
         
-    pub_actions = rospy.Publisher('sand_actions', SandActions, queue_size=2)
+    pub_actions = rospy.Publisher('sand_actions_tap', SandActions, queue_size=2)
     rospy.Subscriber('texture', sensor_msgs.msg.Image, contour_callback, queue_size=1)
     rospy.spin()
 
