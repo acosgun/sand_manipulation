@@ -288,12 +288,12 @@ def remove_border(contours, roi, thresh=2):
 
 
 def get_box(contour):
-    box = Box(*cv2.boundingRect(contour))
-    
+    box = Box(*cv2.boundingRect(contour))        
+
     '''
     padding = 0
     box.x = box.x - padding
-    box.bot_right_x = box.bot_right_x + padding
+    box.h = box.h + 2*padding
     '''
     return box
 

@@ -1,1 +1,4 @@
 *.playpen
+*.pyc
+*.pkl
+*.pk

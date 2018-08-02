@@ -124,8 +124,9 @@ def find_blue(msg):
     if state == 0: #Waiting for command
         cv2.putText(img, "Action: Idle", (20, 40), fontface, font_size, font_color, 2)
         pass
-    elif state == 1: #VS to A        
-        if not data_logged:
+    elif state == 1: #VS to Push Start Row
+        if not data_logged:            
+            ###Data Log
             [start, end, method_text] = get_start_end_points(method)
             img_name = "/home/acrv/andrea_sand_data/ros_ws/src/sandman/logs/img" + str(img_log_counter) + ".png"
             file = open("/home/acrv/andrea_sand_data/ros_ws/src/sandman/logs/logged_data.txt", "a")
@@ -141,62 +142,64 @@ def find_blue(msg):
             file.write("\n")
             file.close()
             cv2.imwrite(img_name, img)
-
             img_log_counter = img_log_counter + 1
             data_logged = True
-
+            ###
         if not point_reached:
-            print("VS to A")
+            print("VS to Push Start Row")
 
             [start, end, method_text] = get_start_end_points(method)
-            
-            #print "Start: " + str(start.x) + ", " + str(start.y)
-            #print "End: " + str(end.x) + ", " + str(end.y)
-            #goal_x = points[0]
-            #goal_y = points[1]
-            #goal_point = [goal_x, goal_y]
-            
-            goal_point = [start.x, start.y]
+            goal_point = [525,  start.y]
 
-            #cv2.circle(img, (goal_point[0], goal_point[1]), 6, (0,0,255),-1)
             cv2.arrowedLine(img, (start.x, start.y), (end.x, end.y), font_color, 4)
-            cv2.putText(img, "Action: VS to 1st point", (20, 40), fontface, font_size, font_color, 2)                        
+            cv2.putText(img, "Action: VS to Push Start Row", (20, 40), fontface, font_size, font_color, 2)                        
             cv2.putText(img, "Method: " + method_text, (20, 60), fontface, font_size, font_color, 2)
             
             servo_to_point(goal_point, depth_cam_to_tool, enable_force)
         else:
             point_reached = False
             state = 2
-    elif state == 2: #VS to B
-        if not point_reached:
-            print("VS to B")
-            
-            [start, end, method_text] = get_start_end_points(method)
-            
-            #goal_x = points[2]
-            #goal_y = points[3]
-            #goal_point = [goal_x, goal_y]
 
-            goal_point = [end.x, end.y]
-            
-            #cv2.circle(img, (goal_point[0], goal_point[1]), 5, (0,0,255),-1)
+    elif state == 2: #VS to Push Start Pt        
+
+        if not point_reached:
+            print("VS to Push Start Pt")
+
+            [start, end, method_text] = get_start_end_points(method)
+            goal_point = [start.x, start.y]
+
             cv2.arrowedLine(img, (start.x, start.y), (end.x, end.y), font_color, 4)
-            cv2.putText(img, "Action: VS to 2nd point", (20, 40), fontface, font_size, font_color, 2)
-            cv2.putText(img, "Method: " + method_text, (20, 70), fontface, font_size, font_color, 2)
+            cv2.putText(img, "Action: VS to Push Start Pt", (20, 40), fontface, font_size, font_color, 2)                        
+            cv2.putText(img, "Method: " + method_text, (20, 60), fontface, font_size, font_color, 2)
             
             servo_to_point(goal_point, depth_cam_to_tool, enable_force)
         else:
             point_reached = False
             state = 3
-    elif state == 3: #Home
+    elif state == 3: #VS to Push End Pt
+        if not point_reached:
+            print("VS to Push End Pt")
+            
+            [start, end, method_text] = get_start_end_points(method)
+            goal_point = [end.x, end.y]
+            
+            cv2.arrowedLine(img, (start.x, start.y), (end.x, end.y), font_color, 4)
+            cv2.putText(img, "Action: VS to Push End Pt", (20, 40), fontface, font_size, font_color, 2)
+            cv2.putText(img, "Method: " + method_text, (20, 70), fontface, font_size, font_color, 2)
+            
+            servo_to_point(goal_point, depth_cam_to_tool, enable_force)
+        else:
+            point_reached = False
+            state = 4
+    elif state == 4: #Home
         if not point_reached:
             print("Going up!")
             goup()
         else:
             point_reached = False
-            state = 4
+            state = 5
             print("Gone up")
-    elif state == 4:
+    elif state == 5:
         point_reached = False
         cv2.putText(img, "Action: Sending Robot Home", (20, 40), fontface, font_size, font_color, 2)
         send_robot_to_home()
@@ -420,9 +423,9 @@ def command_generator_callback(msg):
             point_reached = False
             data_logged = False
             print "Enabling Robot Action"
-    elif msg.data == "h":
-        state = 3
-        print "Going Home"
+    #elif msg.data == "h":
+        #state = 3
+        #print "Going Home"
         
 if __name__ == '__main__':
     rospy.init_node('analisi_img',anonymous=True) # node name
