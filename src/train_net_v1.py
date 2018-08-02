@@ -45,6 +45,18 @@ Y_train = Y[msk]
 X_test = X[~msk]
 Y_test = Y[~msk]
 
+###  AKAN: FEAT SCALING"
+'''
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+# Save Scale
+from sklearn.externals import joblib
+joblib.dump(sc, "/home/acrv/andrea_sand_data/ros_ws/src/sandman/models/scale.pkl")
+'''
+###
+
 X_train = Variable(torch.from_numpy(X_train).float()).contiguous()
 Y_train = Variable(torch.from_numpy(Y_train).float()).contiguous()
 
@@ -54,7 +66,7 @@ Y_test = Variable(torch.from_numpy(Y_test).float()).contiguous()
 
 losses = []
 
-epochs = 50000
+epochs = 25000
 for epoch in range(epochs):
     
     y_pred = model(X_train)
