@@ -105,7 +105,7 @@ def image_capture(msg):
         #img_contours = sample_contours(curCont, 10, True)
         #ref_contours = sample_contours(refCont, 10, True)
 
-        curCont = get_contours(img.copy(), box, True)
+        curCont = get_contours(img.copy(), box, False)
         refCont = get_contours(image_ref.copy(), box, False)        
         img_contours = sample_contours(curCont, 10, True)
         ref_contours = sample_contours(refCont, 10, True)
