@@ -11,6 +11,7 @@ if __name__ == '__main__':
     print("b + Enter: Execute CNN action recommendation")
     print("c + Enter: Execute Contour Center action recommendation")
     print("d + Enter: Execute MAX Contour Difference action recommendation")
+    print("y + Enter: Execute Importance Sampling tap")
     print("z + Enter: Execute MAX tap")
     print("q + Enter: Kill command_generator")
 

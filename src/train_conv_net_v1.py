@@ -53,11 +53,6 @@ from scipy import io
 import numpy as np
 from numpy import zeros, newaxis
 
-from tensorboardX import SummaryWriter
-
-writer = SummaryWriter()
-
-
 model = nn.Sequential(nn.Conv1d(1,1,12), nn.ReLU(),
                        nn.Linear(29,100), nn.ReLU(),
                        nn.Linear(100,4))
@@ -78,10 +73,14 @@ class Net(nn.Module):
         return x
 '''
 
-X = np.loadtxt('../data/U_push_contours.txt')
-X = X.astype(float)
+X_unsorted = np.loadtxt('../data/U_push_contours_V3.txt')
+X_unsorted = X_unsorted.astype(float)
 
-Y = np.loadtxt('../data/Y_push.txt')
+from utils import sort_data_from_matrix
+X = sort_data_from_matrix(X_unsorted)
+print('Sorted the data for you!!!')
+
+Y = np.loadtxt('../data/Y_push_V3.txt')
 Y = Y.astype(float)
 
 X = X[:, newaxis, :]
@@ -108,7 +107,7 @@ optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
 losses = []
 
-epochs = 50000
+epochs = 25000
 for epoch in range(epochs):
     
     y_pred = model(X_train)
@@ -119,13 +118,9 @@ for epoch in range(epochs):
     loss.backward()
     optimizer.step()
 
-    writer.add_scalar('Loss', loss.data, epoch)
-    print "Epoch " + str(epoch)+ ". Loss: " + str(loss.data.numpy())
+    print ("Epoch " + str(epoch)+ ". Loss: " + str(loss.data.numpy()))
     losses.append(loss.data.numpy())
     
-    for name, param in model.named_parameters():
-        writer.add_histogram(name,  param, epoch)
-
 torch.save(model, '../cnn_v1_weights.pt')
 
 t = time.time()

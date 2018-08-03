@@ -66,7 +66,7 @@ Y_test = Variable(torch.from_numpy(Y_test).float()).contiguous()
 
 losses = []
 
-epochs = 50000
+epochs = 25000
 for epoch in range(epochs):
     
     y_pred = model(X_train)

@@ -18,7 +18,7 @@ ann_scale = None
 min_rows = 0
 max_rows = 480
 min_cols = 268
-max_cols = 508
+max_cols = 448
 tool_size = 30
 
 def crop_push_points(points):
@@ -88,24 +88,55 @@ def contour_callback(msg):
     #TODO: 
     bw_height, bw_width = bw_img.shape
     avgX, avgY, intensity_sum = 0.0, 0.0, 0.0
+
+    all_vals = []
+    
     for i in range(0,bw_width):
         for j in range(0,bw_height):
             avgX = avgX+ i*bw_img[j,i]
             avgY = avgY+ j*bw_img[j,i]
             intensity_sum = intensity_sum+bw_img[j,i]
+            all_vals.append(bw_img[j,i])
 
     avgX = int(avgX/intensity_sum)
     avgY = int(avgY/intensity_sum)
-    msg_actions.average_tap.end.x = avgX
-    msg_actions.average_tap.end.y = avgY
+    #msg_actions.average_tap.end.x = avgX
+    #msg_actions.average_tap.end.y = avgY
 
 
     # Max 
     (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(bw_img)
+        
     # publish tap position
     msg_actions.maxdist_tap.end.x = int(maxLoc[0])
     msg_actions.maxdist_tap.end.y = int(maxLoc[1])
 
+
+    # Importance Sampling
+    probs = []
+    my_sum = sum(all_vals)
+    for i in range(0,len(all_vals)):
+            prob = float(all_vals[i])/my_sum
+            probs.append(prob)
+
+    import numpy as np
+    sample = np.random.choice(all_vals, 1, p=probs)
+
+    #print all_vals    
+    #print sample
+    
+    goal_i = 0
+    goal_j = 0        
+    for i in range(0,bw_width):
+        for j in range(0,bw_height):
+            val = bw_img[j,i]
+            if abs(val-sample) < 0.01:
+                goal_i = i
+                goal_j = j
+                
+    msg_actions.average_tap.end.x = int(goal_i)
+    msg_actions.average_tap.end.y = int(goal_j)
+    
     #visualisation
     img = cv2.resize(img, (max_cols-min_cols,max_rows-min_rows), interpolation = cv2.INTER_NEAREST)
     height, width, _ = img.shape
@@ -118,7 +149,7 @@ def contour_callback(msg):
         for j in range(0,height):
 	    cv2.rectangle(img, (tool_size*j, tool_size*i), (tool_size*j+tool_size, tool_size*i+tool_size), (255, 255, 255), 1)
     cv2.circle(img, (tool_size*maxLoc[0]+tool_size//2, tool_size*maxLoc[1] + tool_size//2), 5, (255, 0, 0), -1)
-    cv2.circle(img, (tool_size*avgX+tool_size//2, tool_size*avgY + tool_size//2), 5, (0, 0, 255), -1)
+    cv2.circle(img, (tool_size*msg_actions.average_tap.end.x+tool_size//2, tool_size*msg_actions.average_tap.end.y + tool_size//2), 5, (0, 0, 255), -1)
     cv2.imshow("Actions", img)
     cv2.waitKey(1)
 

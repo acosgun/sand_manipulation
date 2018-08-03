@@ -37,7 +37,7 @@ image_ref = None
 min_rows = 0
 max_rows = 480
 min_cols = 268
-max_cols = 508
+max_cols = 448
 tool_size = 30
 
 '''
@@ -61,9 +61,49 @@ def image_capture(msg):
         cv2.imwrite(ref_img_name,img)
         save_new = False
 
-    diff_img = cv2.subtract(image_ref, img)
+    diff_img_raw = cv2.subtract(image_ref, img)
+
+    enable_masking = True
+
+    if enable_masking:
+        img_mod = cv2.cvtColor(img.copy(), cv2.COLOR_BGR2GRAY)
+        image_ref_mod = cv2.cvtColor(image_ref.copy(), cv2.COLOR_BGR2GRAY)
+        
+        kernel = np.ones((3,3), np.uint8)
+        
+        img_mod = cv2.dilate(img_mod, kernel, iterations=1)
+        image_ref_mod = cv2.dilate(image_ref_mod, kernel, iterations=1)
+        img_mod = cv2.erode(img_mod, kernel, iterations=1)
+        image_ref_mod = cv2.erode(image_ref_mod, kernel, iterations=1)
+        
+        thresh = 90
+        thr,img_mod = cv2.threshold(img_mod,  thresh ,255, cv2.THRESH_BINARY)
+        thr2,image_ref_mod = cv2.threshold(image_ref_mod,thresh,255, cv2.THRESH_BINARY)
+    
+        mask = cv2.bitwise_and(image_ref_mod, img_mod)        
+        diff_img = cv2.bitwise_and(diff_img_raw, cv2.cvtColor(mask.copy(), cv2.COLOR_GRAY2BGR))
+
+    
+
+    '''
+    cv2.namedWindow("TEST1")
+    cv2.imshow("TEST1", img_mod)
+    cv2.waitKey(1)
+    cv2.namedWindow("TEST2")
+    cv2.imshow("TEST2", image_ref_mod)
+    cv2.waitKey(1)
+    cv2.namedWindow("TEST3")
+    cv2.imshow("TEST3", mask)
+    cv2.waitKey(1)
+    cv2.namedWindow("TEST4")
+    cv2.imshow("TEST4", diff_img)
+    cv2.waitKey(1)
+    '''
+
+     
     #accessible robot workspace in image space
     diff_img = diff_img[min_rows:max_rows, min_cols:max_cols]
+    
     # discretisation assuming tool size is 30X30 pixels
     diff_img = cv2.resize(diff_img, (int((max_cols-min_cols)//tool_size),int((max_rows-min_rows)//tool_size)))
 
@@ -77,7 +117,7 @@ if __name__ == '__main__':
 
     rospy.init_node('texture_detector',anonymous=True) # node name
     
-    ref_img_name = rospy.get_param('~ref_texture_img_name', 'refTexture.png')
+    ref_img_name = rospy.get_param('~ref_texture_img_name', 'ref.png')
 
     save_new = raw_input("Save new image? y/n: ") == 'y'
 
@@ -92,7 +132,7 @@ if __name__ == '__main__':
     r = rospy.Rate(100)
     while not rospy.is_shutdown():
         try:        
-            pub.publish(bridge.cv2_to_imgmsg(diff_img, "bgr8"))
+            pub.publish(bridge.cv2_to_imgmsg(diff_img, "bgr8")) #bgr8 #mono8
         except cv_bridge.CvBridgeError as e:
             print(e)
         r.sleep()

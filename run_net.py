@@ -164,6 +164,12 @@ def contour_callback(msg):
         from numpy import zeros, newaxis
 
         X_in = np.array(msg.data)
+
+	enable_valerio_sort = False
+	if enable_valerio_sort:
+        	from utils import sort_data_from_matrix
+        	X_in = sort_data_from_matrix(X_in.reshape(40,1))
+
         if enable_interpolation:
             X_in = interpolate_contours(X_in)
         X_in = np.asarray(X_in)
@@ -298,7 +304,7 @@ if __name__ == '__main__':
         import torch.nn as nn
         import torch.nn.functional as F
         from torch.autograd import Variable
-        ann_model2 = torch.load('/home/acrv/andrea_sand_data/ros_ws/src/sandman/cnn_v1_weights.pt') 
+        ann_model2 = torch.load('/home/acrv/andrea_sand_data/ros_ws/src/sandman/cnn_v1_weights_OLD.pt') 
         print "Using CNN"        
         
         '''

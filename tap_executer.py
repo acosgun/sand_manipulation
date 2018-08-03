@@ -45,7 +45,7 @@ font_size = 0.7
 min_rows = 0
 max_rows = 480
 min_cols = 268
-max_cols = 508
+max_cols = 448
 tool_size = 30
 
 desired_z_down = 0.24
@@ -188,7 +188,7 @@ def find_blue(msg):
         state = 0
 
     #TODO size of low res imqge
-    for c in range(0,8):
+    for c in range(0,6):
         for r in range(0,16):
             cv2.circle(img, (tool_size*c+tool_size//2+min_cols, tool_size*r+tool_size//2), 5, (255, 255, 255), 1)
 
