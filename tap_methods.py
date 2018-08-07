@@ -113,12 +113,18 @@ def contour_callback(msg):
 
 
     # Importance Sampling
-    probs = []
-    my_sum = sum(all_vals)
-    for i in range(0,len(all_vals)):
-            prob = float(all_vals[i])/my_sum
-            probs.append(prob)
+    summed_probs = []
+    my_sum = 0
 
+    power = 2
+    
+    for i in range(0,len(all_vals)):
+            prob = float(all_vals[i])**power
+            my_sum = my_sum + prob
+            summed_probs.append(prob)
+
+    probs = [x / my_sum for x in summed_probs]
+            
     import numpy as np
     sample = np.random.choice(all_vals, 1, p=probs)
 
