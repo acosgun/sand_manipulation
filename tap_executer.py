@@ -92,10 +92,10 @@ def get_end_points(method):
         text = "Poly Regression"
     elif method == "y":
         end = sand_actions_msg.average_tap.end
-        text = "Avg Contour"
+        text = "Sampled Max Difference"
     elif method == "z":
         end = sand_actions_msg.maxdist_tap.end
-        text = "Max Contour"
+        text = "Max Difference"
     return (end, text)
 
 def find_blue(msg):

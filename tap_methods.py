@@ -80,7 +80,7 @@ def contour_callback(msg):
     #import image from msg
     cvb = cv_bridge.CvBridge()
     img = cvb.imgmsg_to_cv2(msg, 'bgr8')
-
+    
     #size of accessible robot workspace (refer to sand_texture.py)
     bw_img = cv2.cvtColor(img,  cv2.COLOR_BGR2GRAY)
    
