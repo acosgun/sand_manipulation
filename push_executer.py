@@ -103,7 +103,7 @@ def get_start_end_points(method):
     elif method == "b":
         start = sand_actions_msg.polyreg_push.start
         end = sand_actions_msg.polyreg_push.end
-        text = "Poly Regression"
+        text = "Convolutional Neural Network"
         #print("VS to A: Executing Poly Regression")
     elif method == "c":
         start = sand_actions_msg.average_push.start
