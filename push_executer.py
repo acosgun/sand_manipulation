@@ -240,7 +240,7 @@ def find_blue(msg):
         state = 0
 
     cv2.imshow('Executed Actions', img)
-    cv2.moveWindow('Executed Actions', 1280, 583)
+    cv2.moveWindow('Executed Actions', 1280, 540)
     cv2.waitKey(1)
 
 

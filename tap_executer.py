@@ -194,7 +194,7 @@ def find_blue(msg):
 
     
     cv2.imshow('TAP Actions', img)
-    cv2.moveWindow('TAP Actions', 660, 583)
+    cv2.moveWindow('TAP Actions', 600, 540)
     cv2.waitKey(1)
 
 def godown(desired_centroid, depth, img):

@@ -113,6 +113,7 @@ def contour_callback(msg):
 
 
     # Importance Sampling
+    '''
     probs = []
     my_sum = sum(all_vals)
     for i in range(0,len(all_vals)):
@@ -121,7 +122,21 @@ def contour_callback(msg):
 
     import numpy as np
     sample = np.random.choice(all_vals, 1, p=probs)
+    '''
+    summed_probs = []
+    my_sum = 0
 
+    power = 5
+    
+    for i in range(0,len(all_vals)):
+            prob = float(all_vals[i])**power
+            my_sum = my_sum + prob
+            summed_probs.append(prob)
+
+    probs = [x / my_sum for x in summed_probs]
+            
+    import numpy as np
+    sample = np.random.choice(all_vals, 1, p=probs)
     #print all_vals    
     #print sample
     
@@ -149,7 +164,7 @@ def contour_callback(msg):
         for j in range(0,height):
 	    cv2.rectangle(img, (tool_size*j, tool_size*i), (tool_size*j+tool_size, tool_size*i+tool_size), (255, 255, 255), 1)
     cv2.circle(img, (tool_size*maxLoc[0]+tool_size//2, tool_size*maxLoc[1] + tool_size//2), 5, (255, 0, 0), -1)
-    cv2.circle(img, (tool_size*msg_actions.average_tap.end.x+tool_size//2, tool_size*msg_actions.average_tap.end.y + tool_size//2), 5, (0, 0, 255), -1)
+    #cv2.circle(img, (tool_size*msg_actions.average_tap.end.x+tool_size//2, tool_size*msg_actions.average_tap.end.y + tool_size//2), 5, (0, 0, 255), -1)
     cv2.imshow("Actions", img)
     cv2.waitKey(1)
 

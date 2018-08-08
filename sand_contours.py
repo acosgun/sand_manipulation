@@ -64,7 +64,7 @@ def draw_candidate_pushes(img):
         #draw_push(img, sand_actions_msg.ann_push, brush_width, (12,255,255), "ANN", (50, 30)) #Yellow
         draw_push(img, sand_actions_msg.polyreg_push, brush_width, (0,255,125), "CNN", (50, 50)) #GRN
         #draw_push(img, sand_actions_msg.average_push, brush_width, (12,120,255), "Avg Contour", (50, 70))
-        #draw_push(img, sand_actions_msg.maxdist_push, brush_width, (255, 255, 0), "Max Contour", (50, 90))
+        draw_push(img, sand_actions_msg.maxdist_push, brush_width, (255, 255, 0), "Max Contour", (50, 90))
 
 def sand_actions_callback(msg):
     global sand_actions_msg
@@ -146,7 +146,7 @@ def image_capture(msg):
         cv2.imshow("Image", img)
 
         cv2.namedWindow("Image_Ref")
-        cv2.moveWindow("Image_Ref", 660, 0)
+        cv2.moveWindow("Image_Ref", 600, 0)
         cv2.imshow("Image_Ref", this_ref)
         cv2.waitKey(1)
 
